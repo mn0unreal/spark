@@ -26,13 +26,34 @@ class LinkCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(name='set')
     async def set_link(self, ctx, server_name, value):
         """Set a custom link for a custom server name."""
         config['servers'][server_name] = value
         with open('config.json', 'w') as config_file:
             json.dump(config, config_file)
-        await ctx.send(f'Successfully set {server_name} link to: {value}')
+        await ctx.send(f'Successfully set `{server_name}` link to: `{value}`')
+
+    @commands.command(name='servers')
+    async def list_servers(self, ctx):
+        """List all servers names."""
+        server_names = list(config['servers'].keys())
+        if server_names:
+            server_names_str = '\n'.join(
+                f'{index + 1}. `{name}`'
+                for index, name in enumerate(server_names))
+            await ctx.send(f"Servers names:\n{server_names_str}")
+        else:
+            await ctx.send("No servers names found.")
+
+    @commands.command(name='server_L')
+    async def show_all_server_links(self, ctx):
+        """Show links for all servers."""
+        if config['servers']:
+            for server_name, link in config['servers'].items():
+                await ctx.send(f'`{server_name}` link: `{link}`')
+        else:
+            await ctx.send("No servers found.")
 
 
 # Add the cog to the bot
@@ -53,7 +74,7 @@ async def on_message(message):
         server_name = message.content[2:]  # Remove '!!' prefix
         link = config['servers'].get(server_name)
         if link is not None:
-            await message.channel.send(f'{server_name} link: {link}')
+            await message.channel.send(f'`{server_name}` link: `{link}`')
 
     await bot.process_commands(message)
 
@@ -69,7 +90,9 @@ async def custom_help(ctx, *args):
         # Display general help message
         help_message = (
             "Type `!!help command` for more info on a command.\n"
-            "You can also type `!!set_link Name Link` for set server link .\n"
+            "You can also type `!!set Name Link` for set server link.\n"
+            "You can also type `!!servers` to list all servers names.\n"
+            "You can also type `!!server_L` to show links for all servers.\n"
             "You can also type `!!help category` for more info on a category.")
         await ctx.send(help_message)
     else:
@@ -82,12 +105,12 @@ async def custom_help(ctx, *args):
             await ctx.send("Command not found.")
 
 
-# Suppress "Command not found" for any unknown command related to custom server names
+# Suppress "Command not found" for any unknown command related to custom servers names
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         if ctx.message.content.startswith('!!'):
-            return  # Ignore the error for custom server names
+            return  # Ignore the error for custom servers names
     await ctx.send("Command not found.")
 
 
