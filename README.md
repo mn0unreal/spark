@@ -1,4 +1,4 @@
-# spark
+# spark bot
 dis bot
 spark
 BOT
